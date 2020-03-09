@@ -1,0 +1,64 @@
+﻿
+code from the original ROTT source code. This code is part of the ROTT sound engine:
+---------------------------------------------------------------------------------------
+
+
+typedef	struct
+   {
+   unsigned long  length;
+   short int      priority;
+   char           data[];
+   } PCSound;
+
+
+
+/*---------------------------------------------------------------------
+   Function: PCFX_Play
+
+   Starts playback of a Muse sound effect.
+---------------------------------------------------------------------*/
+
+int PCFX_Play
+   (
+   PCSound *sound,
+   int priority,
+   unsigned long callbackval
+   )
+
+   {
+   unsigned flags;
+
+   if ( priority < PCFX_Priority )
+      {
+      PCFX_SetErrorCode( PCFX_NoVoices );
+      return( PCFX_Warning );
+      }
+
+   PCFX_Stop( PCFX_VoiceHandle );
+
+   PCFX_VoiceHandle++;
+   if ( PCFX_VoiceHandle < PCFX_MinVoiceHandle )
+      {
+      PCFX_VoiceHandle = PCFX_MinVoiceHandle;
+      }
+
+   flags = DisableInterrupts();
+
+   PCFX_LengthLeft = sound->length;
+
+   if ( !PCFX_UseLookupFlag )
+      {
+      PCFX_LengthLeft >>= 1;
+      }
+
+   PCFX_Priority = priority;
+
+   PCFX_Sound = &sound->data;
+   PCFX_CallBackVal = callbackval;
+
+   RestoreInterrupts( flags );
+
+   return( PCFX_VoiceHandle );
+   }
+
+

@@ -1,0 +1,57 @@
+﻿
+#define MAXPLAYERCOLORS (11)
+
+//...
+
+void LoadColorMap( void )
+{
+   int i,j;
+   int lump, length;
+
+   if (ColorMapLoaded==1)
+      Error("Called LoadColorMap twice\n");
+   ColorMapLoaded=1;
+//
+//   load in the light tables
+//   256 byte align tables
+//
+
+	lump = W_GetNumForName("colormap");
+	length = W_LumpLength (lump) + 255;
+	colormap = SafeMalloc (length);
+	colormap = (byte *)( ((int)colormap + 255)&~0xff);
+	W_ReadLump (lump,colormap);
+
+// Fix fire colors in colormap
+
+   for (i=31;i>=16;i--)
+		for (j=0xea;j<0xf9;j++)
+         colormap[i*256+j]=colormap[(((i-16)/4+16))*256+j];
+
+// Get special maps
+
+	lump = W_GetNumForName("specmaps");
+	length = W_LumpLength (lump+1) + 255;
+	redmap = SafeMalloc (length);
+	redmap = (byte *)( ((int)redmap + 255)&~0xff);
+	W_ReadLump (lump+1,redmap);
+   greenmap = redmap+(16*256);
+
+// Get player colormaps
+
+//   if (modemgame==true)
+      {
+      lump = W_GetNumForName("playmaps")+1;
+      for (i=0;i<MAXPLAYERCOLORS;i++)
+         {
+	      length = W_LumpLength (lump+i) + 255;
+	      playermaps[i] = SafeMalloc (length);
+	      playermaps[i] = (byte *)( ((int)playermaps[i] + 255)&~0xff);
+	      W_ReadLump (lump+i,playermaps[i]);
+         }
+      }
+
+   if (!quiet)
+      printf("RT_VIEW: Colormaps Initialized\n");
+
+}

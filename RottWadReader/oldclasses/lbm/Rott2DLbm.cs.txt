@@ -1,0 +1,399 @@
+﻿/*
+ * ROTT2D
+ * Unit: ROTT2D Patch sealed Class
+ * Project owner & creator: Pieter De Ridder
+ * Project website: http://www.rott2d.net
+ * Creation date: 12-02-2012
+ * 
+ * This file is part of ROTT2D.
+ *
+ * ROTT2D is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ROTT2D is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with ROTT2D.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+
+#if !DEBUG
+using System.Windows.Forms; //DEBUG
+#endif
+
+using ROTT2D.classes.lump;
+using ROTT2D.classes.palette;
+
+using ROTT2D.core.drawing;
+
+namespace ROTT2D.classes.lbm
+{
+
+    #region lbm Header structs
+    public struct Rott2DLbmHeader //ROTT WAD Lbm structure
+    {
+        /*
+         * ROTT lbm format
+         * 
+         * lbm is a format with a build-in palette.
+         * ROTT uses this format for it's (animated) menu textures. There are not much textures
+         * in a ROTT wad file that uses this format through.
+         * 
+         * ROTT lumpy.h code:
+         * typedef struct
+         * {
+         *   short width;
+         *   short height;
+         *   byte palette[768];
+         *   byte data;
+         * } lbm_t;
+         * 
+         * also ROTT's VL_DecompressLBM() method declares in the comments:
+         * Quote: "LIMITATIONS - Only works with 320x200!!!"
+         * 
+         */
+
+        /// <summary>
+        /// Public consts
+        /// </summary>
+        public const ushort LBM_HEADER_SIZE = 4;
+        
+        /// <summary>
+        /// Private vars
+        /// </summary>
+        private ushort _lbmWidth, _lbmHeight; // texture bounding box size
+
+        /// <summary>
+        /// Width
+        /// </summary>
+        public ushort LbmWidth
+        {
+            get { return this._lbmWidth; }
+            set { this._lbmWidth = value; }
+        }
+
+        /// <summary>
+        /// Height
+        /// </summary>
+        public ushort LbmHeight
+        {
+            get { return this._lbmHeight; }
+            set { this._lbmHeight = value; }
+        }
+
+        /// <summary>
+        /// Method that return data size
+        /// </summary>
+        public int lbmSize()
+        {
+            return this.LbmWidth * this.LbmHeight;
+        }
+    }
+    #endregion
+
+    #region Lbm class
+    public sealed class Rott2DLbm : Rott2DTextureLump, IRott2DLbm
+    {
+
+        /*
+         * ROTT Lbm format
+         * 
+         * Lbm is a IFF (Interchange File Format) compressed image format from EA, patented in 1985.
+         * Some lump (textures) in the ROTT WAD files are stored in this format. 
+         * 
+         * Notably there are three large textures stored in the wad format as lbm:
+         * AP_WRLD  = "Apogee" logo background image (the Earth).
+         * PLANE    = menu rotating block
+         * TRILOGO  = background "metal" menu image with the ROTT 'triad' logo
+         * 
+         * It is very important to note that ROTT uses only the lbm format to store large textures,
+         * only defined at a size of 320x200 in pixel size.
+         * 
+         * Just a note to my self: why didn't the DIP team use the pic_t or patch_t format instead?
+         * Is it for memory footprint or just for the compression resulting a smaller WAD file?
+         * 
+         */
+
+        #region Public consts
+        /// <summary>
+        /// Private consts
+        /// </summary>
+        public const ushort LBM_HEADER_SIZE = 4; //lbm header is 4 bytes in size
+        #endregion
+
+        #region Private Vars
+        /// <summary>
+        /// Private vars
+        /// </summary>
+        private bool _headerReady = false; //header is ready
+        private Rott2DLbmHeader _lbmHeader; //lbm header
+        #endregion
+
+        #region Constructor
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public Rott2DLbm(ref byte[] lbmLumpData, ref Rott2DPalette palette)
+        {
+            this.isHeaderReady = false;
+            this.isReady = false;
+            this._rawData = lbmLumpData;
+            this._palette = palette;
+
+            //process header data first
+            this._lbmHeader = new Rott2DLbmHeader();
+            this.processPatchHeader();
+
+            //create buffer from size
+            if ((this._buffer == null) && (this.isHeaderReady))
+                this._buffer = new Bitmap(this._lbmHeader.LbmWidth, this._lbmHeader.LbmHeight, PixelFormat.Format24bppRgb);
+
+            //generate buffer bitmap
+            this.processLumpData();
+        }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public Rott2DLbm(string name, ref byte[] lbmLumpData, ref Rott2DPalette palette)
+        {
+            this.isHeaderReady = false;
+            this.isReady = false;
+            this.Name = name;
+            this._rawData = lbmLumpData;
+            this._palette = palette;
+
+            //process header data first
+            this._lbmHeader = new Rott2DLbmHeader();
+            this.processPatchHeader();
+
+            //create buffer from size
+            if ((this._buffer == null) && (this.isHeaderReady))
+                this._buffer = new Bitmap(this._lbmHeader.LbmWidth, this._lbmHeader.LbmHeight, PixelFormat.Format24bppRgb);
+
+            //generate buffer bitmap
+            this.processLumpData();
+        }
+        #endregion
+
+        #region Destructor
+        /// <summary>
+        /// Destructor
+        /// </summary>
+        ~Rott2DLbm()
+        {
+            base.Dispose();
+        }
+        #endregion
+
+        #region Getters & Setters
+        /// <summary>
+        /// Header ready?
+        /// </summary>
+        public bool isHeaderReady
+        {
+            get { return this._headerReady; }
+            private set { this._headerReady = value; }
+        }
+        #endregion
+
+        #region Methods
+        /// <summary>
+        /// Read header data fields
+        /// </summary>
+        private void processPatchHeader()
+        {
+            if (this.getDataSize() >= LBM_HEADER_SIZE)
+            {
+                //read lbm header image bounds
+                this._lbmHeader.LbmWidth = BitConverter.ToUInt16(this._rawData, 0);  //read width
+                this._lbmHeader.LbmHeight = BitConverter.ToUInt16(this._rawData, 2); //read height
+
+                //MessageBox.Show(this._lbmHeader.LbmWidth.ToString() + "x" + this._lbmHeader.LbmHeight.ToString());
+
+                //read and convert the lbm internal palette data
+                /*byte[] lbmPaletteData = new byte[Rott2DPalette.PALETTE_LUMP_SIZE];
+
+                for(int p = 0; p < Rott2DPalette.PALETTE_LUMP_SIZE; p++)
+                {
+                    lbmPaletteData[p] = this._rawData[LBM_HEADER_SIZE + p];
+                }
+
+                this._lbmHeader.LbmPalette = new Rott2DPalette(ref lbmPaletteData);
+                */
+
+                //what now remains is data that is the size of (width*height)
+                //inside this processing loop, we don't do bounds checking for 320x200 like ROTT does.
+
+                this.isHeaderReady = true;
+            }
+        }
+
+        /// <summary>
+        /// Generate the buffer texture
+        /// </summary>
+        protected override void processLumpData()
+        {
+            if (this.getDataSize() >= Rott2DLbmHeader.LBM_HEADER_SIZE)
+            {
+                if ((this._buffer != null) && (this._palette.isReady))
+                {
+                    using (Rott2DFastBitmap fastBuffer = new Rott2DFastBitmap(this._buffer))
+                    {
+                        int iLumpIndex = 4 + 4;          //index for lump data array to byte (wall 0-4096, sky 0-512000)
+                        ushort iPaletteColorIndex = 0;  //return value for lump palette color index (0-256)
+
+                        //generate pixels in bitmap, starting with Y value (for ROTT's "modex" compatibility mode)
+                        for (int x = 0; x < this.TextureWidth; x++)
+                        {
+                            for (int y = 0; y < this.TextureHeight; y++)
+                            {
+                                //convert lump data to Palette Index values
+                                iPaletteColorIndex = this._rawData[iLumpIndex++];
+
+                                //get Palette Index and create color value
+                                Color rott2dImgColor = this._palette[iPaletteColorIndex];
+                                //rott2dImgColor = Color.FromArgb(colormap[iPaletteColorIndex].a, colormap[iPaletteColorIndex].r, colormap[iPaletteColorIndex].g, colormap[iPaletteColorIndex].b);
+
+                                //draw color pixels to bitmap texture
+                                fastBuffer.SetColor(x, y, rott2dImgColor);
+                                //this._buffer.SetPixel(x, y, rott2dImgColor);
+                            }
+                        }
+                    }
+
+                    //rotate bitmap 90 degrees
+                    //this.rotateBuffer();
+
+                    //flag ready
+                    this.forceIsReady();
+                }
+            }
+        }
+
+
+        /*
+        /// <summary>
+        /// Generate the buffer texture
+        /// </summary>
+        protected override void processLumpData()
+        {
+            if (this.getDataSize() >= (LBM_HEADER_SIZE + this._lbmHeader.lbmSize()))
+            {
+                if ((this.isHeaderReady) && (this._buffer != null) && (this._lbmHeader.LbmPalette.isReady))
+                 {
+                     using (Rott2DFastBitmap fastBuffer = new Rott2DFastBitmap(this._buffer))
+                     {
+                         //generate pixels to bitmap
+                         int iLumpIndex = LBM_HEADER_SIZE; //start pixels processing from last header byte
+                         ushort iPaletteColorIndex = 0;       //return value for lump palette color index (0-256)
+
+                         //generate pixels in bitmap, starting with Y value (for ROTT's "modex" compatibility mode)
+                         for (int y = 0; y < this._lbmHeader.LbmHeight; y++)
+                             for (int x = 0; x < this._lbmHeader.LbmWidth; x++)
+                             {
+                                 //convert lump data to Palette Index values
+                                 iPaletteColorIndex = this._rawData[iLumpIndex++];
+
+                                 //get Palette Index and create color value
+                                 Color rott2dImgColor = this._lbmHeader.LbmPalette[iPaletteColorIndex];
+                                 //rott2dImgColor = Color.FromArgb(colormap[iPaletteColorIndex].a, colormap[iPaletteColorIndex].r, colormap[iPaletteColorIndex].g, colormap[iPaletteColorIndex].b);
+
+                                 //draw color pixels to bitmap texture
+                                 fastBuffer.SetColor(x, y, rott2dImgColor);
+                                 //this._buffer.SetPixel(x, y, rott2dImgColor);
+                             }
+                         
+
+
+                         
+                            const uint8_t * read = gfx_data + 768 +4;
+	                        const uint8_t * readend = gfx_data + size;
+	                        uint8_t * dest = data;
+	                        uint8_t * destend = data + (width * height);
+	                        uint8_t code = 0;
+	                        uint8_t length = 0;
+	                        uint8_t count = 0;
+
+	                        while (read < readend && dest < destend && count < width) {
+		                        code = *read++;
+		                        if (code < 0x80) {
+			                        length = code + 1;
+			                        memcpy(dest, read, length);
+			                        dest+=length;
+			                        read+=length;
+		                        } else if (code > 0x80) {
+			                        length = (code^0xFF)+2;;
+			                        code = *read++;
+			                        memset(dest, code, length);
+			                        dest+=length;
+		                        } else length = 0;
+		                        count += length;
+	                        } 
+                          
+                     }
+
+                     //flag ready
+                     this.forceIsReady();
+                 }
+            }
+        }
+
+        */
+
+        /// <summary>
+        /// ToString
+        /// </summary>
+        public override string ToString()
+        {
+            return "lbm";
+        }
+        #endregion
+
+        #region Static Methods
+        /// <summary>
+        /// Figure if we have a LBM picture
+        /// </summary>
+        public static bool isLbmTexture(byte[] lumpdata)
+        {
+            /*
+             * ROTT's LBM format contains a small header of 4 bytes (width & height),
+             * a build-in palette and then data that is the size of width*height.
+             * 
+             */
+
+            bool isLbm = false;
+
+            if (lumpdata.Length > Rott2DLbmHeader.LBM_HEADER_SIZE + 768)
+            {
+                Rott2DLbmHeader header = new Rott2DLbmHeader();
+                header.LbmWidth = BitConverter.ToUInt16(lumpdata, 0);   //width of texture
+                header.LbmHeight = BitConverter.ToUInt16(lumpdata, 2);  //height of texture
+
+                ushort pixelCount = (ushort)(header.LbmWidth * header.LbmHeight);  //calculate size of actual pixels, should be 16384
+
+                if ((lumpdata.Length >= (pixelCount + Rott2DLbmHeader.LBM_HEADER_SIZE)) && (header.LbmWidth > 128) && (header.LbmWidth <= 320) && (header.LbmHeight > 128) && (header.LbmHeight <= 200))
+                    isLbm = true;
+            }
+
+            return isLbm;
+        }
+        #endregion
+
+    }
+    #endregion
+
+}

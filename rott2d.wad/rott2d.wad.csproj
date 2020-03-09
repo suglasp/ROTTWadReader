@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{8D40B41F-D807-4F66-BE3C-4D3C580531F4}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>rott2d.wad</RootNamespace>
+    <AssemblyName>rott2d.wad</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ascii\IRott2DASCII.cs" />
+    <Compile Include="ascii\Rott2DASCII.cs" />
+    <Compile Include="colormap\IRott2DColormap.cs" />
+    <Compile Include="colormap\Rott2DColormap.cs" />
+    <Compile Include="flat\IRott2DFlat.cs" />
+    <Compile Include="flat\Rott2DFlat.cs" />
+    <Compile Include="lump\IRott2DLump.cs" />
+    <Compile Include="lump\IRott2DLumpWriter.cs" />
+    <Compile Include="lump\Rott2DLump.cs" />
+    <Compile Include="lump\Rott2DLumpWriter.cs" />
+    <Compile Include="lump\Rott2DSoundLump.cs" />
+    <Compile Include="lump\Rott2DTextureLump.cs" />
+    <Compile Include="marker\IRott2DMarker.cs" />
+    <Compile Include="marker\IRott2DMarkerController.cs" />
+    <Compile Include="marker\Rott2DMarker.cs" />
+    <Compile Include="marker\Rott2DMarkerController.cs" />
+    <Compile Include="masked\IRott2DMasked.cs" />
+    <Compile Include="masked\Rott2DMasked.cs" />
+    <Compile Include="music\IRott2DMidi.cs" />
+    <Compile Include="music\Rott2DMidi.cs" />
+    <Compile Include="palette\IRott2DPalette.cs" />
+    <Compile Include="palette\Rott2DPalette.cs" />
+    <Compile Include="patch\IRott2DPatch.cs" />
+    <Compile Include="patch\Rott2DPatch.cs" />
+    <Compile Include="pcspeaker\IRott2DSpeaker.cs" />
+    <Compile Include="pic\IRott2DPic.cs" />
+    <Compile Include="pic\Rott2DPic.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="raw\IRott2DRaw.cs" />
+    <Compile Include="raw\Rott2DRaw.cs" />
+    <Compile Include="sky\IRott2DSky.cs" />
+    <Compile Include="sky\Rott2DSky.cs" />
+    <Compile Include="sound\IRott2DVoc.cs" />
+    <Compile Include="sound\IRott2DWave.cs" />
+    <Compile Include="sound\Rott2DVoc.cs" />
+    <Compile Include="sound\Rott2DWave.cs" />
+    <Compile Include="transmasked\IRott2DTransMasked.cs" />
+    <Compile Include="transmasked\Rott2DTransMasked.cs" />
+    <Compile Include="unknown\IRott2DUnknown.cs" />
+    <Compile Include="unknown\Rott2DUnknown.cs" />
+    <Compile Include="wad\IRott2DWADReader.cs" />
+    <Compile Include="wad\Rott2DWADReader.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\rott2d.draw\rott2d.draw.csproj">
+      <Project>{57DEA09C-32D3-4A3B-9BE9-AAD2212EF5CB}</Project>
+      <Name>rott2d.draw</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\rott2d.media\rott2d.media.csproj">
+      <Project>{F315789B-4F25-4C1A-B291-A6FBC6AABE86}</Project>
+      <Name>rott2d.media</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="pcspeaker\Rott2DSpeaker.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="#old_classes\lbm\IRott2DLbm.cs.txt" />
+    <Content Include="#old_classes\lbm\Rott2DLbm.cs.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

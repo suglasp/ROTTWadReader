@@ -1,0 +1,161 @@
+﻿
+  coding history
+------------------
+
+"ROTT2D WAD Reader" project started on 09-01-2012
+                     ->  Last updated: 24-06-2012
+
+project by Pieter De Ridder
+web: www.rott2d.net
+
+v1a : - gui design for Rott2DWADReader
+      - created class created
+
+v1b : - Rott2DPalette + Rott2DGeneral created
+
+v1c : - Rott2DWADLabels + Rott2DLump created
+
+v1d : - Rott2DSky + Rott2DFlat + Rott2DPatch created
+
+v1e : - Rott2DMasked created
+      - problems with Rott2DMasked generateLumpData() method
+        Bitconverter.UInt16 not working
+
+v1h:  - Rott2DVOC, Rott2DUnknown, Rott2DMidi
+
+v1g : - Finished Rott2DMasked and create new classes Rott2DASCII, Rott2DMarker, Rott2DMarkerConroller
+
+v1i : - Rott2DTransMasked created and Finish Rott2DMarkerConroller
+
+v1j : - Further implemented decoding of texture structures.
+
+v1k : - Found in lumpy.h (rott source) other struct types.
+        Some textures are recognized as "unknown" -> new pic_t format?
+       
+	    One of this is the very simple struct:
+		typedef struct
+		{
+		   byte     width,height;
+		   byte     data;
+		} pic_t;
+		
+      I suspect some textures like key images and other small textures use this format!
+
+v1l: - Added Rott2DPic class for small textures + updated a compare function
+
+v1m - v1u: - Rott2DPic works for images with a width of 8xn.
+v1z: - Rott2DPic finally works fully
+
+v2a: - fixed in wave output the small "crack". Offset in rawdata was incorrect because
+       didn't count the header size in raw copy to output.
+
+
+v2b: - Added Rott2DWave, own wave output class
+	 - Added Rott2DSimplePCspeakerPlayer class (maybe for future pc speaker support?) 
+     - Added checking for correct auto detect data type recognition
+	 - Found bug in transmasked class => not all textures are loaded?
+
+v2c - v2e: - Problem with transmasked textures. Depends on type of transmasked texture.
+			 First in a row reads perfect. For others i have to add a byte read offset?
+
+v2f: - fixed a few incorrect recognized lumps in controller
+     - found bug: when to fast scrolling in list -> bitmap goed out of memory and picture box shows a cross
+
+v2g: - fixed gunstart marker
+     - tested wad file from shareware v1.0 (default provided is shareware v1.3)
+
+v2h: - optimized some routines to recognize Flat, Sky & Palette
+     - added reading from Birger's comment (winrottgl code -> export PCX file).
+
+v2i  - v2j: (06-02-2012) - finally fixed the transmasked textures!
+
+v2k: - Added code for alpha value in Palette to result in darkness
+
+v2l: - Improved and optimized lot of the code, also added Rott2DFastBitmap & Rott2DFastBitmap.SetFill
+     - Changed values in is(Trans-)Masked textures from up to 4096 to 2048 in size in Rott2DMarkerController
+	 - Fixed reading of wall45 texture
+
+v2m: - Optimized wave class
+
+v2n: - tried AP_PAL palette lump -> works
+
+v2o: - rewritten parts of copy/pasted doombuilder code for testing the loop of the (large) masked textures
+           --> result te same
+
+v2p: - after some searching and raw dumping of the large read masked textures, found out that
+       iXpos was defined as byte instead of ushort or int. So the loop was "stuck" on the end of row 255,
+	   and even never throw an error in a try-catch.
+	 - fixed also Rott2DPic size of images. Header of a pic defines width and height as byte. But changed
+	    this to ushort. Reason was for loading the "MMBK" image lump.
+
+v2q,r,s,t,u: - updated some stuff. Found out in version v2t that lbm format != patch format.
+
+v2v: - restructure of the Rott2DMarkerController.isxxxx() methods, to it's own "parent" classes.
+
+v2x: - problems with restructured (pic_t) Rott2DPic.isPicTexture() method. These are solved.
+     - Also fixed loading of pic_t's of max 320. (bounds where set to 64*4, increased to 80*4).
+	 - Updated lbm format checking. I still need to finish the algorithm of lbm.
+	 - Still Need to find out LED1 en LED2 lumps.
+
+v2y: - fixed LED1 and LED2 lump loading (masked minimal texture size was 10, is now 3. Dis same for transmasked).
+     - added in-between class for loading RAW textures and changed inheritance for Rott2DSky and Rott2DFlat.
+	 - changed palette short values to ushort values.
+	 - further research for lbm format in ROTT wad lump's.
+
+v2z: - after long debugging of the AP_WRLD, PLANE and the TRILOGO texture lumps,
+       i found out that these are actually patch_t textures.
+	   So removed lbm code class again and changes Rott2DPatch class to support loading of larger textures
+	   up to 320x200 pix.
+	 - some lumps in darkwar.wad are recognized as transmasked lumps. Namely lumps in range "MASKED3" -> "MASKED39".
+	   "MASKED3A" does read as a transmasked.
+	 - updated some short var values to ushort.
+
+v3a: - Fixed bug with darkwar.wad lumps in range "MASKED3" -> "MASKED39" that where recognized as masked instead of transmasked.
+     - Added support for colormaps, not readlly finished yet.
+     - New bug: Some smaller lumps are now recognized as transmasked
+
+v3b: - Finished colormaps.
+     - Fixed bug where some smaller lumps are recognized as transmasked instead of masked
+	 - Updated the voc file class a bit more (block parsing methods)
+	 - Made Rott2DLumpWriter disposable
+	 - On the end of parsing a lump from GUI list, disposed the palette var
+
+v3c: - Fixed loading of palette (pal was disposed at the end of reading the list).
+       So in order to show the palette in the output, i needed to Clone the actual bitmap.
+	 - Improved some stuff on the colormap.
+
+v3d: - Moved all data to dll's. Still needs to be imported.
+
+v3e: - Conversion to dll's completed.
+
+v3f: - Public release version.
+
+v3g: - Same as v3f, but cleaned up a bit.
+
+v3h-j: - Minor fixes in code
+
+v3k: - (2013) fixed wad file close, when error on reading header data
+
+
+Info on ROTT v1.3 wad files lump count:
+Huntbegins wad file lump count: 2091
+Darkwar    wad file lump count: 3892
+
+
+
+todo:
+[fixed] fastbitmap? + struct properties en pointers => werkt PixelData data->A?
+[fixed] "bbarrel", "sdoor4a" -> herkend als flat ipv masked
+[fixed] "edoorh" -> herkend as palette ipv masked
+[?    ] when to fast scrolling in list -> bitmap goes out of memory and application crashes
+[fixed] optimize wave memory build routine (Rott2DWave)
+[fixed] wall45 gives error? -> marked as Masked
+[fixed] application hang on large masked format textures 
+[fixed] led1 and led2 lumps do not load
+[fixed] screen1 does not load
+[fixed] move all isxxxx() methods from controller to "parent" classes
+[fixed] create in-between class for sky and flat --> "raw" format
+[skip ] finish reading body of a lbm lump
+[fixed] darkwar.wad lumps in range "MASKED3" -> "MASKED39" are recognized as masked
+[fixed] Some smaller lumps are now recognized as transmasked
+

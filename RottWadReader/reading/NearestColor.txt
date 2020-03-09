@@ -1,0 +1,104 @@
+
+
+static int GetDistanceBetweenColours(Color a, Color b) {
+	int dR = a.R - b.R, dG = a.G - b.G, dB = a.B - b.B;
+	return dR * dR + dG * dG + dB * dB;
+}
+
+
+static Color GetClosestColour(Color source, IEnumerable<Color> palette) {
+	
+	// Store the current closest distance and colour:
+	int CurrentClosestDistance = int.MaxValue;
+	Color CurrentClosestColour = Color.Black;
+	
+	// Iterate over the possible matches, and check the distance each time.
+	foreach (Color c in palette) {
+		int d = GetDistanceBetweenColours(source, c);
+		if (d < CurrentClosestDistance) {
+			CurrentClosestDistance = d;
+			CurrentClosestColour = c;
+		}
+	}
+
+	// Return the closest colour!
+	return CurrentClosestColour;
+}
+
+--------------------------------
+
+private Color GetColorMatch(Color col)
+{
+	Color ColorMatch = Color.Empty;
+
+	int LeastDistance = int.MaxValue;
+
+	int Alpha = col.A;
+	int Red = col.R;
+	int Green = col.G;
+	int Blue = col.B;
+
+	for(int i=0; i<SwatchArray.Length; i++)
+	{
+		Color PaletteColor = SwatchArray[i];
+
+		int AlphaDistance = PaletteColor.A - Alpha;
+		int RedDistance = PaletteColor.R - Red;
+		int GreenDistance = PaletteColor.G - Green;
+		int BlueDistance = PaletteColor.B - Blue;
+
+		int Distance = ( AlphaDistance * AlphaDistance ) + 
+			( RedDistance * RedDistance ) + 
+			( GreenDistance * GreenDistance ) + 
+			( BlueDistance * BlueDistance );
+
+		if(Distance < LeastDistance)
+		{
+			ColorMatch = PaletteColor;
+			LeastDistance = Distance;
+
+			if(Distance == 0)
+				return PaletteColor;
+		}
+	}
+
+	return ColorMatch;
+}
+
+-------------
+
+
+ROTT source code:
+byte BestColor (int r, int g, int b, byte *palette)
+{
+	int	i;
+	long	dr, dg, db;
+	long	bestdistortion, distortion;
+	int	bestcolor;
+	byte	*pal;
+
+//
+// let any color go to 0 as a last resort
+//
+   bestdistortion = ( (long)WeightR*r*r + (long)WeightG*g*g + (long)WeightB*b*b )*2;
+	bestcolor = 0;
+
+	pal = &palette[0];
+	for (i=0 ; i<= 255 ; i++,pal+=3)
+	{
+		dr = r - (int)pal[0];
+		dg = g - (int)pal[1];
+		db = b - (int)pal[2];
+      distortion = WeightR*dr*dr + WeightG*dg*dg + WeightB*db*db;
+		if (distortion < bestdistortion)
+		{
+			if (!distortion)
+				return i;		// perfect match
+
+			bestdistortion = distortion;
+			bestcolor = i;
+		}
+	}
+
+	return bestcolor;
+}

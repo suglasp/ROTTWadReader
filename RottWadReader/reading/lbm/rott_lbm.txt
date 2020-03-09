@@ -1,0 +1,102 @@
+﻿//****************************************************************************
+//
+// VL_DecompressLBM ()
+//
+// LIMITATIONS - Only works with 320x200!!!
+//
+//****************************************************************************
+
+void VL_DecompressLBM (lbm_t *lbminfo, boolean flip)
+{
+   byte *screen = (byte *)bufferofs;
+   byte *orig;
+	int  count;
+	byte b,
+        rept;
+   byte *source = (byte *)&lbminfo->data;
+   byte *buf;
+   int  ht = lbminfo->height;
+   int  planes;
+   byte writemask;
+   int  x = 0;
+   int  y;
+   byte *origbuf;
+   byte pal[768];
+
+   writemask   = 1 << (x&3);
+   orig = screen;
+
+   buf = (byte *) SafeMalloc (64000);
+
+   origbuf = buf;
+
+   VL_ClearBuffer (displayofs, 0);
+
+   memcpy(&pal[0],lbminfo->palette,768);
+
+   VL_NormalizePalette (&pal[0]);
+
+   VW_MarkUpdateBlock (0, 0, 320, 200);
+
+   while (ht--)
+   {
+      count = 0;
+
+   	do
+	   {
+		   rept = *source++;
+
+   		if (rept > 0x80)
+	   	{
+		   	rept = (rept^0xff)+2;
+			   b = *source++;
+   			memset (buf, b, rept);
+	   		buf += rept;
+		   }
+   		else if (rept < 0x80)
+	   	{
+		   	rept++;
+			   memcpy (buf, source, rept);
+   			buf += rept;
+	   		source += rept;
+		   }
+   		else
+	   		rept = 0;               // rept of 0x80 is NOP
+
+		   count += rept;
+
+   	} while (count < lbminfo->width);
+   }
+
+   for (planes = 0; planes < 4; planes++)
+   {
+      int cnt;
+
+      cnt = 0;
+      screen = orig;
+      buf = origbuf;
+      VGAMAPMASK (writemask);
+
+      for (y = 0; y < ((lbminfo->height*lbminfo->width)>>2); y++)
+      {
+         *screen++ = *(buf+(y*4)+planes);
+         cnt++;
+
+         if (cnt == 80)
+         {
+            screen += 16;
+            cnt = 0;
+         }
+      }
+
+      writemask <<= 1;
+   }
+
+   SafeFree(origbuf);
+
+   if (flip==true)
+      VW_UpdateScreen ();
+
+   VL_FadeIn (0, 255, &pal[0], 15);
+
+}

@@ -1,0 +1,5 @@
+﻿
+This is the ROTT wad files folder.
+
+If you have a huntbgin.wad (ROTT Shareware) or darkwar.wad (ROTT Registered) file, copy them over here.
+
