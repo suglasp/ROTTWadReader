@@ -31,3 +31,6 @@ Books of interest:
 The idea of this tool was in the first place to create a 'ROTT 2D' game.
 But after investing time in this utility, i was already statisfied to be able to reverse engineer most of the WAD file data lumps and convert the algorthims to C# code.
 
+Update 2023:
+Tested the wad files from the 'Rise Of The Triad: Ludicrous Edition' Demo on Steam.
+Seems the new remastered version uses the same wad format as the original version.
